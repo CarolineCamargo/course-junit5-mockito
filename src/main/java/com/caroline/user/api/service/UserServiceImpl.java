@@ -10,7 +10,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -33,13 +32,14 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public User create(UserDTO userDTO) {
-        findByEmail(userDTO);
+        userDTO.setId(0); //deveria validar se o Id já não existe, fiz isso para não ficar muito diferente do instrutor
+        validateExistsByEmail(userDTO);
         return repository.save(mapper.map(userDTO, User.class));
     }
 
     @Override
     public User update(UserDTO userDTO) {
-        findByEmail(userDTO);
+        validateExistsByEmail(userDTO);
         return repository.save(mapper.map(userDTO, User.class));
     }
 
@@ -49,11 +49,8 @@ public class UserServiceImpl implements UserService{
         repository.deleteById(id);
     }
 
-    private void findByEmail(UserDTO userDTO){
-
-        Optional<User> user = repository.findByEmail(userDTO.getEmail());
-
-        if (user.isPresent() && !(user.get().getId().equals(userDTO.getId())))
+    private void validateExistsByEmail(UserDTO userDTO){
+        if (repository.existsByEmailAndIdNot(userDTO.getEmail(), userDTO.getId()))
             throw new DataIntegrityViolationException("Email already registered");
     }
 }
